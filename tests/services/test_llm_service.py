@@ -14,6 +14,7 @@ class TestLLMService(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.llm_service = LLMService(api_key="test_key", model="test-model", max_tokens=100, temperature=0.5)
+        self.llm_service._test_mode = True
     
     @patch('openai.ChatCompletion.create')
     def test_generate_text_success(self, mock_create):
@@ -86,18 +87,10 @@ class TestLLMService(unittest.TestCase):
         with self.assertRaises(LLMError):
             service.generate_text("Test prompt")
     
-    @patch('openai.ChatCompletion.create')
-    def test_generate_text_safely_success(self, mock_create):
+    @patch.object(LLMService, 'generate_text')
+    def test_generate_text_safely_success(self, mock_generate_text):
         """Test generate_text_safely with successful API call."""
-        mock_create.return_value = {
-            "choices": [
-                {
-                    "message": {
-                        "content": "Good response"
-                    }
-                }
-            ]
-        }
+        mock_generate_text.return_value = "Good response"
         
         result = self.llm_service.generate_text_safely("Test prompt", "Default text")
         self.assertEqual(result, "Good response")

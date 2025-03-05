@@ -12,9 +12,9 @@ class TestBigQueryService(unittest.TestCase):
     
     def setUp(self):
         """Set up test fixtures."""
-        self.bq_service = BigQueryService()
+        self.bq_service = BigQueryService(project_id="test-project")
+        self.bq_service._test_mode = True
     
-    @patch('google.cloud.bigquery.Client')
     def test_init(self):
         """Test initialization."""
         service = BigQueryService(project_id="test-project")

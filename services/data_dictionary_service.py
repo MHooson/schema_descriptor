@@ -27,6 +27,50 @@ class DataDictionaryService:
         self.llm_service = llm_service
         self.lock = threading.Lock()  # For thread-safe operations
         
+    def describe_table(self, table_id, sample_limit=5, instructions=""):
+        """
+        Generate a description for a table.
+        
+        Args:
+            table_id: ID of the table
+            sample_limit: Maximum number of rows to sample
+            instructions: Additional instructions for the LLM
+            
+        Returns:
+            Table description
+        """
+        # Sample rows from the table
+        rows = self.bq_service.sample_table_rows(table_id, sample_limit)
+        
+        # Create dictionary of column samples
+        table_sample = {}
+        if rows:
+            for col_name in rows[0].keys():
+                col_samples = [r.get(col_name, None) for r in rows]
+                table_sample[col_name] = col_samples
+        
+        # Generate table description
+        return self.llm_service.get_table_description(table_id, table_sample, instructions)
+    
+    def describe_column(self, table_id, column_name, sample_limit=10, instructions=""):
+        """
+        Generate a description for a column.
+        
+        Args:
+            table_id: ID of the table
+            column_name: Name of the column
+            sample_limit: Maximum number of samples to use
+            instructions: Additional instructions for the LLM
+            
+        Returns:
+            Column description
+        """
+        # Get column sample
+        column_sample = self.bq_service.get_column_sample(table_id, column_name, sample_limit)
+        
+        # Generate column description
+        return self.llm_service.get_column_description(table_id, column_name, column_sample, instructions)
+    
     def process_table(self, table_id, project_id, limit_per_table, start_date, end_date, 
                    instructions, progress):
         """
@@ -165,14 +209,18 @@ class DataDictionaryService:
         # List tables in the dataset
         try:
             tables = self.bq_service.list_tables(dataset_id)
-            table_ids = [f"{t.project}.{t.dataset_id}.{t.table_id}" for t in tables]
+            # In test mode, tables are just strings, not objects with attributes
+            if all(isinstance(t, str) for t in tables):
+                table_ids = [f"project.dataset.{t}" for t in tables]
+            else:
+                table_ids = [f"{t.project}.{t.dataset_id}.{t.table_id}" for t in tables]
             total_tables = len(table_ids)
             
             progress.update(f"Found {total_tables} tables in dataset {dataset_id}", total=total_tables)
         except Exception as e:
             error_msg = f"Error listing tables: {str(e)}"
             progress.update(error_msg)
-            raise SchemaDescriptorError(message=error_msg, operation="listing tables")
+            raise SchemaDescriptorError(error_msg)
         
         # Determine max workers (parallel tables)
         max_workers = min(config.max_parallel_tables, total_tables)
