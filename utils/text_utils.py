@@ -3,7 +3,7 @@ Text utility functions.
 Provides common functionality for working with text.
 """
 
-def merge_descriptions(old_desc, new_desc, replace=True):
+def merge_descriptions(old_desc, new_desc, replace=False):
     """
     Merges or replaces text descriptions.
     
