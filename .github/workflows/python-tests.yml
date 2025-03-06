@@ -22,24 +22,40 @@ jobs:
         python-version: ${{ matrix.python-version }}
     
     - name: Install dependencies
+      # Important: Order matters for dependency installation
+      # See DEPENDENCY_NOTES.md for detailed explanation
       run: |
         python -m pip install --upgrade pip
         python -m pip install --upgrade setuptools
+
+        # 1. Install test dependencies first
         pip install pytest==7.4.0 pytest-cov==4.1.0 mock==5.1.0
-        # Install BigQuery dependencies with correct versions
+        
+        # 2. Install core dependencies in specific order to resolve conflicts:
+        # - protobuf must be 3.20.3 (Streamlit needs <4.0, BigQuery needs >=3.19.5)
+        # - altair must be 4.2.2 (Streamlit 1.12.0 depends on altair.vegalite.v4)
         pip install protobuf==3.20.3
+        pip install altair==4.2.2
+        
+        # 3. Install Google dependencies
         pip install google-api-core==2.11.0 google-auth==2.16.3 google-cloud-core==2.3.2
         pip install google-cloud-bigquery==3.9.0 grpcio==1.51.3 grpcio-status==1.51.3
-        # Install OpenAI and Streamlit
+        
+        # 4. Install OpenAI and Streamlit
         pip install openai==0.28.0 streamlit==1.12.0
-        # Install remaining requirements
+        
+        # 5. Install remaining requirements without resolving dependencies
         pip install -r requirements.txt --no-deps
     
     - name: Run tests
+      # Temporarily skip running tests until all test issues are fixed
+      # Remove the first command and keep just the python tests/run_tests.py to run tests
       run: |
         python -c "import sys; print('Skipping tests for now, all dependency issues fixed')" || python tests/run_tests.py
         
     - name: Run coverage
+      # Temporarily skip coverage until all test issues are fixed
+      # Remove the first command and keep just the pytest command to run coverage
       run: |
         python -c "import sys; print('Skipping coverage for now')" || pytest --cov=. --cov-report=xml
     

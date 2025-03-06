@@ -30,10 +30,30 @@ Schema Descriptor helps data teams create and maintain comprehensive documentati
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
-3. Install dependencies:
+3. Install dependencies in the correct order (this is important due to dependency constraints):
    ```
-   pip install -r requirements.txt
+   # Install key dependencies with specific versions first
+   pip install protobuf==3.20.3
+   pip install altair==4.2.2
+   pip install streamlit==1.12.0
+   pip install openai==0.28.0
+   
+   # Install remaining packages
+   pip install -r requirements.txt --no-deps
    ```
+
+### Dependency Constraints
+
+This project has specific dependency requirements due to compatibility constraints:
+
+- **protobuf**: Must be exactly 3.20.3 to work with both Streamlit and Google Cloud libraries
+- **altair**: Must be 4.2.2 to work with Streamlit 1.12.0
+- **streamlit**: Version 1.12.0 is required
+- **openai**: Version 0.28.0 is required for the current API integration
+
+Installing dependencies in a different order or with different versions may cause errors.
+
+For detailed information about dependencies, see [DEPENDENCY_NOTES.md](DEPENDENCY_NOTES.md).
 
 ## Usage
 
@@ -57,6 +77,10 @@ Schema Descriptor helps data teams create and maintain comprehensive documentati
 8. Review and edit the descriptions in the main window
 
 9. Click "Commit Changes to BigQuery" to save the descriptions back to your BigQuery metadata
+
+For more detailed instructions with screenshots, see [docs/example_usage.md](docs/example_usage.md).
+
+If you run into issues, check the [docs/troubleshooting.md](docs/troubleshooting.md) guide.
 
 ## Project Structure
 
@@ -88,6 +112,10 @@ This application requires access to your BigQuery data and uses OpenAI's API. Pl
 
 1. Your service account has appropriate permissions
 2. You review generated descriptions before committing them to ensure no sensitive data is exposed
+
+## Contributing
+
+We welcome contributions to improve Schema Descriptor! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines and instructions.
 
 ## License
 
